@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup, Tag
 import re
+from typing import Any
 from .config import DIRECT_IMAGE_PATTERN, IMAGE_PATH_PATTERN
-from typing import Dict, List, Any
+from .models import BriefTorrent, FullTorrent, SearchResult
+
 
 def _parse_dl(dl: Tag | None) -> dict[str, str]:
     """Turns a <dl> into {label: value} pairs."""
@@ -15,10 +17,36 @@ def _parse_dl(dl: Tag | None) -> dict[str, str]:
         result[key] = dd.get_text(strip=True)
     return result
 
-def _parse_row(row, base_url) -> dict[str, Any] | None:
+def _parse_pagination(table) -> tuple[int, int]:
+    """ 
+        Extracts current page and total page count from the pagination row,
+        since the pagination roww might exceed 30 and not show it isn't 
+        very accurate.
+    """
+    pagination_td = table.find("td", {"colspan": True})
+    if not pagination_td:
+        return 1, 1
+
+    current_tag = pagination_td.find("b")
+    try:
+        current_page = int(current_tag.get_text(strip=True)) if current_tag else 1
+    except ValueError:
+        current_page = 1
+
+    page_numbers = []
+    for a in pagination_td.find_all("a", href=re.compile(r"/search/")):
+        try:
+            page_numbers.append(int(a.get_text(strip=True)))
+        except ValueError:
+            continue 
+
+    page_count = max(page_numbers) if page_numbers else current_page
+    return current_page, page_count
+
+def _parse_row(row, base_url) -> BriefTorrent | None:
     """Parses a single search result row into a dict."""
 
-    # finds all the rows and checks if they have the expected number of cells (8) and don't contain header or "no results" cells
+    # finds all the rows and checks if number of cells is unusual
     cells = row.find_all("td")
     if len(cells) < 8:
         return None
@@ -47,23 +75,20 @@ def _parse_row(row, base_url) -> dict[str, Any] | None:
 
     uploader_tag = cells[7].find("a")
     uploader = uploader_tag.get_text(strip=True) if uploader_tag else "Anonymous"
-    uploader_link = uploader_tag["href"] if uploader_tag else None
-    if uploader_link and uploader_link.startswith("/"):
-        uploader_link = base_url + uploader_link
 
-    return {
-        "title": name,
-        "torrent_id": torrent_id,
-        "url": url,
-        "category": category,
-        "time": time,
-        "magnet_link": magnet_link,
-        "size": size,
-        "seeders": seeders,
-        "leechers": leechers,
-        "uploader": uploader,
-        "uploader_link": uploader_link,
-    }
+
+    return BriefTorrent(
+            title=name,
+            torrent_id=torrent_id,
+            url=url,
+            category=category,
+            date=time,
+            magnet_link=magnet_link,
+            size=size,
+            seeders=seeders,
+            leechers=leechers,
+            uploader=uploader,
+        )
 
 
 def _extract_images_from_text(text: str) -> list[str]:
@@ -83,18 +108,21 @@ def _extract_pre_data(pre_tag: Tag | None) -> dict[str, str | list[str] | None]:
     if not pre_tag:
         return {"description": None, "images": []}
     text = pre_tag.get_text(strip=False)
+    extracted_images = _extract_images_from_text(text)
+
     return {
         "description": text.strip() or None,
-        "images": _extract_images_from_text(text),
+        "images": extracted_images if extracted_images else None,
     }
 
 
-def _parse_search_results(html: str, base_url: str) -> list[dict[str, Any]]:
-    """Parses the HTML of a search results page into a list of dicts."""
+def _parse_search_results(html: str, base_url: str) -> SearchResult:
+    """Parses the HTML of a search results page into a search result."""
     soup = BeautifulSoup(html, "lxml")
     table = soup.find("table", {"id": "searchResult"})
     if not table:
-        return []
+        return SearchResult(torrents=[])
+    current_page, page_count = _parse_pagination(table)
     rows = [
         tr for tr in table.find_all("tr")
         if not tr.find("th")
@@ -105,7 +133,7 @@ def _parse_search_results(html: str, base_url: str) -> list[dict[str, Any]]:
         item = _parse_row(row, base_url)
         if item:
             results.append(item)
-    return results
+    return SearchResult(torrents=results, current_page=current_page, page_count=page_count)
 
 
 def _parse_torrent_page(html: str) -> dict[str, Any] | None:
@@ -133,15 +161,15 @@ def _parse_torrent_page(html: str) -> dict[str, Any] | None:
     pre_tag = nfo_tag.find("pre") if nfo_tag else None
     pre_data = _extract_pre_data(pre_tag)
 
-    return {
-        "title": name,
-        "category": category,
-        "size": col1_data.get("Size"),
-        "date_uploaded": col2_data.get("Uploaded"),
-        "uploader": col2_data.get("By"),
-        "seeders": col2_data.get("Seeders"),
-        "leechers": col2_data.get("Leechers"),
-        "magnet_link": magnet_link,
-        "description": pre_data["description"],
-        "images": pre_data["images"],
-    }
+    return FullTorrent(
+            title=name,
+            category=category,
+            size=col1_data.get("Size"),
+            date_uploaded=col2_data.get("Uploaded"),
+            uploader=col2_data.get("By"),
+            seeders=col2_data.get("Seeders"),
+            leechers=col2_data.get("Leechers"),
+            magnet_link=magnet_link,
+            description=pre_data["description"],
+            images=pre_data["images"],
+        )

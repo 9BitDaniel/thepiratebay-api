@@ -1,3 +1,3 @@
-from .client import PirateBay
+from .client import TorrentClient
 
-__all__ = ["PirateBay"]
+__all__ = ["TorrentClient"]

@@ -1,7 +1,7 @@
 [project]
 name = "thepiratebay-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "An Unofficial API for the pirate bay"
 readme = "README.md"
 authors = [
     { name = "Danial Zahedi", email = "Da.36512021@gmail.com" }
@@ -11,6 +11,7 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
     "httpx>=0.28.1",
     "lxml>=6.1.1",
+    "pydantic>=2.13.4",
 ]
 
 [build-system]
