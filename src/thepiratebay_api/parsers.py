@@ -10,18 +10,26 @@ def _parse_dl(dl: Tag | None) -> dict[str, str]:
     result = {}
     if not dl:
         return result
-    dts = dl.find_all("dt")
-    dds = dl.find_all("dd")
-    for dt, dd in zip(dts, dds):
+    for dt in dl.find_all("dt"):
         key = dt.get_text(strip=True).rstrip(":")
-        result[key] = dd.get_text(strip=True)
+        dd = dt.find_next_sibling("dd")
+        if dd is None:
+            continue
+
+        value = dd.get_text(separator=" ", strip=True)
+        if key == "Info Hash" and not value:
+            next_node = dd.next_sibling
+            if next_node and isinstance(next_node, str):
+                value = next_node.strip()
+        result[key] = value
     return result
 
+
 def _parse_pagination(table) -> tuple[int, int]:
-    """ 
-        Extracts current page and total page count from the pagination row,
-        since the pagination roww might exceed 30 and not show it isn't 
-        very accurate.
+    """
+    Extracts current page and total page count from the pagination row,
+    since the pagination roww might exceed 30 and not show it isn't
+    very accurate.
     """
     pagination_td = table.find("td", {"colspan": True})
     if not pagination_td:
@@ -38,19 +46,20 @@ def _parse_pagination(table) -> tuple[int, int]:
         try:
             page_numbers.append(int(a.get_text(strip=True)))
         except ValueError:
-            continue 
+            continue
 
     page_count = max(page_numbers) if page_numbers else current_page
     return current_page, page_count
 
+
 def _parse_row(row, base_url) -> BriefTorrent | None:
     """Parses a single search result row into a dict."""
 
-    # finds all the rows and checks if number of cells is unusual
+    # Finds all the rows and checks if number of cells is unusual
     cells = row.find_all("td")
     if len(cells) < 8:
         return None
-    
+
     category_tag = cells[0].find("a")
     category = category_tag.get_text(strip=True) if category_tag else None
 
@@ -58,7 +67,11 @@ def _parse_row(row, base_url) -> BriefTorrent | None:
     if not name_tag:
         return None
     name = name_tag.get_text(strip=True)
-    url = base_url + name_tag["href"] if name_tag["href"].startswith("/") else name_tag["href"]
+    url = (
+        base_url + name_tag["href"]
+        if name_tag["href"].startswith("/")
+        else name_tag["href"]
+    )
 
     torrent_id_match = re.search(r"/torrent/(\d+)/", url)
     torrent_id = torrent_id_match.group(1) if torrent_id_match else ""
@@ -76,19 +89,18 @@ def _parse_row(row, base_url) -> BriefTorrent | None:
     uploader_tag = cells[7].find("a")
     uploader = uploader_tag.get_text(strip=True) if uploader_tag else "Anonymous"
 
-
     return BriefTorrent(
-            title=name,
-            torrent_id=torrent_id,
-            url=url,
-            category=category,
-            date=time,
-            magnet_link=magnet_link,
-            size=size,
-            seeders=seeders,
-            leechers=leechers,
-            uploader=uploader,
-        )
+        title=name,
+        torrent_id=torrent_id,
+        url=url,
+        category=category,
+        date=time,
+        magnet_link=magnet_link,
+        size=size,
+        seeders=seeders,
+        leechers=leechers,
+        uploader=uploader,
+    )
 
 
 def _extract_images_from_text(text: str) -> list[str]:
@@ -124,22 +136,26 @@ def _parse_search_results(html: str, base_url: str) -> SearchResult:
         return SearchResult(torrents=[])
     current_page, page_count = _parse_pagination(table)
     rows = [
-        tr for tr in table.find_all("tr")
-        if not tr.find("th")
-        and not tr.find("td", {"colspan": True})
+        tr
+        for tr in table.find_all("tr")
+        if not tr.find("th") and not tr.find("td", {"colspan": True})
     ]
     results = []
     for row in rows:
         item = _parse_row(row, base_url)
         if item:
             results.append(item)
-    return SearchResult(torrents=results, current_page=current_page, page_count=page_count)
+    return SearchResult(
+        torrents=results, current_page=current_page, page_count=page_count
+    )
 
 
 def _parse_torrent_page(html: str) -> dict[str, Any] | None:
     """Parses a torrent page into a dict."""
+
     soup = BeautifulSoup(html, "lxml")
     detail_frame = soup.find("div", {"id": "detailsframe"})
+
     if not detail_frame:
         return None
 
@@ -148,8 +164,23 @@ def _parse_torrent_page(html: str) -> dict[str, Any] | None:
 
     col1 = detail_frame.find("dl", {"class": "col1"})
     col2 = detail_frame.find("dl", {"class": "col2"})
-    col1_data = _parse_dl(col1)
-    col2_data = _parse_dl(col2)
+
+    raw_metadata = {}
+    raw_metadata.update(_parse_dl(col1))
+    raw_metadata.update(_parse_dl(col2))
+
+    is_vip = False
+    is_trusted = False
+    # Checking if the uploader is vip or trusted
+    if col2:
+        dt = col2.find("dt", string=re.compile(r"By"))
+        if dt:
+            dd = dt.find_next_sibling("dd")
+            if dd:
+                if dd.find("img", alt="VIP"):
+                    is_vip = True
+                if dd.find("img", alt="Trusted"):
+                    is_trusted = True
 
     category_tag = col1.find("a") if col1 else None
     category = category_tag.get_text(strip=True) if category_tag else None
@@ -161,15 +192,31 @@ def _parse_torrent_page(html: str) -> dict[str, Any] | None:
     pre_tag = nfo_tag.find("pre") if nfo_tag else None
     pre_data = _extract_pre_data(pre_tag)
 
+    category = raw_metadata.pop("Type", None)
+    size = raw_metadata.pop("Size", None)
+    uploaded = raw_metadata.pop("Uploaded", None)
+    uploader = raw_metadata.pop("By", None)
+    seeders = raw_metadata.pop("Seeders", None)
+    leechers = raw_metadata.pop("Leechers", None)
+    info_hash = raw_metadata.pop("Info Hash", None)
+    num_files = raw_metadata.pop("Files", None)
+    # Keeping the metadata clean
+    raw_metadata.pop("Comments", None)
+
     return FullTorrent(
-            title=name,
-            category=category,
-            size=col1_data.get("Size"),
-            date_uploaded=col2_data.get("Uploaded"),
-            uploader=col2_data.get("By"),
-            seeders=col2_data.get("Seeders"),
-            leechers=col2_data.get("Leechers"),
-            magnet_link=magnet_link,
-            description=pre_data["description"],
-            images=pre_data["images"],
-        )
+        title=name,
+        category=category,
+        size=size,
+        date_uploaded=uploaded,
+        uploader=uploader,
+        seeders=seeders,
+        leechers=leechers,
+        magnet_link=magnet_link,
+        description=pre_data["description"],
+        images=pre_data["images"],
+        info_hash=info_hash,
+        Files=num_files,
+        is_trusted=is_trusted,
+        is_vip=is_vip,
+        additional_info=raw_metadata,
+    )
