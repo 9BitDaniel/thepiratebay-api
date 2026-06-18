@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
 from enum import IntEnum
 from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BaseTorrent(BaseModel):
@@ -8,7 +9,7 @@ class BaseTorrent(BaseModel):
 
     title: str | None = Field(
         default=None,
-        description="Title of the torrent", 
+        description="Title of the torrent",
     )
     category: str | None = Field(
         default=None,
@@ -34,10 +35,7 @@ class BaseTorrent(BaseModel):
         default=None,
         description="Who uploaded this torrent?",
     )
-    date: str | None = Field(
-        default=None, 
-        alias="date_uploaded"
-    )
+    date: str | None = Field(default=None, alias="date_uploaded")
 
 
 class BriefTorrent(BaseTorrent):
@@ -105,10 +103,12 @@ class SearchResult(BaseModel):
     current_page: int = 1
     page_count: int = 1
 
+
 class MirrorStatus(BaseModel):
     url: str
     status_code: int | None = None
     is_alive: bool = False
+
 
 class MirrorList(BaseModel):
     mirrors: list[MirrorStatus]
@@ -117,97 +117,106 @@ class MirrorList(BaseModel):
     def alive(self) -> list[MirrorStatus]:
         return [m for m in self.mirrors if m.is_alive]
 
+
 class _Audio(IntEnum):
-    ALL       = 100
-    MUSIC     = 101
-    AUDIOBOOKS= 102
-    FLAC      = 104
-    OTHER     = 105
+    ALL = 100
+    MUSIC = 101
+    AUDIOBOOKS = 102
+    FLAC = 104
+    OTHER = 105
+
 
 class _Video(IntEnum):
-    ALL         = 200
-    MOVIES      = 201
-    DVDRS       = 202
-    CLIPS       = 204
-    TV_SHOWS    = 205
-    HD_MOVIES   = 207
-    HD_TV_SHOW  = 208
-    M3D         = 209
-    UHD_MOVIES  = 211
+    ALL = 200
+    MOVIES = 201
+    DVDRS = 202
+    CLIPS = 204
+    TV_SHOWS = 205
+    HD_MOVIES = 207
+    HD_TV_SHOW = 208
+    M3D = 209
+    UHD_MOVIES = 211
     UHD_TV_SHOW = 212
-    OTHER       = 299
+    OTHER = 299
+
 
 class _Apps(IntEnum):
-    ALL    = 300
-    WIN    = 301
-    MAC    = 302
-    UNIX   = 303
-    IOS    = 305
-    ANDROID= 306
+    ALL = 300
+    WIN = 301
+    MAC = 302
+    UNIX = 303
+    IOS = 305
+    ANDROID = 306
+
 
 class _Games(IntEnum):
-    ALL     = 400
-    PC      = 401
-    MAC     = 402
-    PSX     = 403
+    ALL = 400
+    PC = 401
+    MAC = 402
+    PSX = 403
     XBOX360 = 404
-    WII     = 405
+    WII = 405
     HANDHEL = 406
-    IOS     = 407
+    IOS = 407
     ANDROID = 408
-    OTHER   = 499
+    OTHER = 499
+
 
 class _XXX(IntEnum):
-    ALL     = 500
-    MOVIES  = 501
-    DVDR    = 502
-    PICTURES= 503
-    GAMES   = 504
-    HD      = 505
-    CLIPS   = 506
-    UHD     = 507
-    OTHER   = 599
+    ALL = 500
+    MOVIES = 501
+    DVDR = 502
+    PICTURES = 503
+    GAMES = 504
+    HD = 505
+    CLIPS = 506
+    UHD = 507
+    OTHER = 599
+
 
 class _Other(IntEnum):
-    ALL      = 600
-    EBOOKS   = 601
-    COMICS   = 602
+    ALL = 600
+    EBOOKS = 601
+    COMICS = 602
     PICTURES = 603
-    COVERS   = 604
-    OTHER    = 699
+    COVERS = 604
+    OTHER = 699
 
-# Defaulting to ALL value of the subclass if it's not specified 
+
+# Defaulting to ALL value of the subclass if it's not specified
 class CategoryMeta(type):
     def __getattribute__(cls, name):
-        
+
         val = super().__getattribute__(name)
 
         if isinstance(val, type) and issubclass(val, IntEnum):
+
             class EnumProxy:
                 def __getattr__(self, attr):
                     return getattr(val, attr)
-        
+
                 def __int__(self):
                     return int(val.ALL)
-                
+
                 def __eq__(self, other):
                     return val.ALL == other or int(val.ALL) == other
-                
+
                 def __repr__(self):
                     return repr(val.ALL)
-                
+
                 def __str__(self):
                     return str(val.ALL)
 
             return EnumProxy()
-        
+
         return val
 
+
 class Category(metaclass=CategoryMeta):
-    ALL   = 0
+    ALL = 0
     Audio = _Audio
     Video = _Video
-    Apps  = _Apps
+    Apps = _Apps
     Games = _Games
-    Porn  = _XXX
+    Porn = _XXX
     Other = _Other

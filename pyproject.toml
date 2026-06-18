@@ -1,19 +1,56 @@
 [project]
 name = "thepiratebay-api"
 version = "0.1.0"
-description = "An Unofficial API for the pirate bay"
+description = "An Unofficial API wrapper for the pirate bay"
 readme = "README.md"
 authors = [
     { name = "Danial Zahedi", email = "Da.36512021@gmail.com" }
 ]
 requires-python = ">=3.12"
+
+license = { text = "MIT" }
+
+keywords = ["piratebay", "thepiratebay", "thepiratebay-api", "tpb", "api-wrapper", "scraper", "torrent", "httpx", "pydantic"]
+
 dependencies = [
     "beautifulsoup4>=4.15.0",
-    "httpx>=0.28.1",
+    "httpx[socks]>=0.28.1",
     "lxml>=6.1.1",
     "pydantic>=2.13.4",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/9BitDaniel/thepiratebay-api"
+Repository = "https://github.com/9BitDaniel/thepiratebay-api"
+Documentation = "https://github.com/9BitDaniel/thepiratebay-api/blob/main/README.md"
+BugTracker = "https://github.com/9BitDaniel/thepiratebay-api/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.18",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N"]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = false

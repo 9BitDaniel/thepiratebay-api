@@ -1,6 +1,7 @@
-from bs4 import BeautifulSoup, Tag
 import re
-from typing import Any
+
+from bs4 import BeautifulSoup, Tag
+
 from .config import DIRECT_IMAGE_PATTERN, IMAGE_PATH_PATTERN
 from .models import BriefTorrent, FullTorrent, SearchResult
 
@@ -220,6 +221,7 @@ def _parse_torrent_page(html: str) -> FullTorrent | None:
         is_vip=is_vip,
         additional_info=raw_metadata,
     )
+
 
 def _parse_mirror_list(html: str) -> list[str]:
     """Parses the mirror list page into a list of URLs."""
