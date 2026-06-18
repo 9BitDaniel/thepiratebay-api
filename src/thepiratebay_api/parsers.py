@@ -150,8 +150,8 @@ def _parse_search_results(html: str, base_url: str) -> SearchResult:
     )
 
 
-def _parse_torrent_page(html: str) -> dict[str, Any] | None:
-    """Parses a torrent page into a dict."""
+def _parse_torrent_page(html: str) -> FullTorrent | None:
+    """Parses a torrent page into a FullTorrent Model."""
 
     soup = BeautifulSoup(html, "lxml")
     detail_frame = soup.find("div", {"id": "detailsframe"})
@@ -220,3 +220,24 @@ def _parse_torrent_page(html: str) -> dict[str, Any] | None:
         is_vip=is_vip,
         additional_info=raw_metadata,
     )
+
+def _parse_mirror_list(html: str) -> list[str]:
+    """Parses the mirror list page into a list of URLs."""
+    soup = BeautifulSoup(html, "lxml")
+    table = soup.find("table", {"id": "searchResult"})
+    if not table:
+        return []
+
+    urls = []
+    for tr in table.find_all("tr"):
+        td = tr.find("td", class_="site")
+        if not td:
+            continue
+        a = td.find("a", href=True)
+        if not a:
+            continue
+        url = a["href"].strip()
+        if url:
+            urls.append(url)
+
+    return urls

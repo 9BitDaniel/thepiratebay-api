@@ -105,6 +105,17 @@ class SearchResult(BaseModel):
     current_page: int = 1
     page_count: int = 1
 
+class MirrorStatus(BaseModel):
+    url: str
+    status_code: int | None = None
+    is_alive: bool = False
+
+class MirrorList(BaseModel):
+    mirrors: list[MirrorStatus]
+
+    @property
+    def alive(self) -> list[MirrorStatus]:
+        return [m for m in self.mirrors if m.is_alive]
 
 class _Audio(IntEnum):
     ALL       = 100
