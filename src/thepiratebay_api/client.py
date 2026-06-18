@@ -1,26 +1,30 @@
 import httpx
 from .config import BASE_URL
 from .parsers import _parse_search_results, _parse_torrent_page
-from .models import SearchResult, FullTorrent
+from .models import SearchResult, FullTorrent, Category
 
 
 class TorrentClient:
+    Category = Category
     def __init__(self, url: str = BASE_URL, **httpx_kwargs) -> None:
         self.base_url = url
         self.session = httpx.Client(**{"timeout": 10, **httpx_kwargs})
+
+    def close(self) -> None:
+        self.session.close()
 
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
-        self.session.close()
+        self.close()
 
     def __repr__(self) -> str:
         return f"TorrentClient(base_url={self.base_url!r})"
 
-    def search(self, query: str, page: int = 1) -> SearchResult:
+    def search(self, query: str, category: Category = Category.ALL, page: int = 1) -> SearchResult:
         """Search a query with a page number"""
-        url = f"{self.base_url}/search/{query}/{page}/99/0"
+        url = f"{self.base_url}/search/{query}/{page}/99/{category}"
         res = self.session.get(url)
         return _parse_search_results(res.text, self.base_url)
 
