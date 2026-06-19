@@ -4,7 +4,7 @@
 
 An unofficial Python API wrapper for The Pirate Bay.
 
->**Beta** — Please [open an issue](https://github.com/9BitDaniel/thepiratebay-api/issues) if something breaks.
+>**Beta** — Please [open an issue](https://github.com/9BitDaniel/thepiratebay-api/issues) if something's not working.
 
 ## Installation
 
@@ -45,7 +45,7 @@ with TorrentClient() as client:
 results = client.search("ubuntu")
 
 # With category
-results = client.search("interstellar", category=TorrentClient.Category.Video.HD_MOVIES)
+results = client.search("Tenet", category=TorrentClient.Category.Video.HD_MOVIES)
 
 # With pagination
 results = client.search("ubuntu", page=2)
@@ -90,7 +90,7 @@ print(details.is_vip)
 print(details.is_trusted)
 print(details.description)
 print(details.images)         # image URLs found in the description
-print(details.additional_info) # extra metadata like tags, language, etc.
+print(details.additional_info) # extra metadata that differ across torrents
 ```
 
 ### Browse & Discover
@@ -134,7 +134,7 @@ client = TorrentClient(headers={"User-Agent": "Mozilla/5.0"})
 client = TorrentClient(proxy="http://localhost:8080")
 
 # Custom mirror as base URL
-client = TorrentClient(url="https://tpb.party")
+client = TorrentClient(url="https://thepiratebay.bond")
 ```
 
 ## Requirements
@@ -145,6 +145,10 @@ client = TorrentClient(url="https://tpb.party")
 - lxml
 - pydantic
 
+## Contributing
+
+Contributions are welcome
+
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
