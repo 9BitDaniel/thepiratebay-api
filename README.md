@@ -1,2 +1,2 @@
 # thepiratebay-api
-Unofficial API for The Pirate Bay (still under developement) 
+Unofficial API for The Pirate Bay (still under development) 
