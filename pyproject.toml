@@ -1,14 +1,14 @@
 [project]
 name = "thepiratebay-api"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "An Unofficial API wrapper for the pirate bay"
 readme = "README.md"
 authors = [
     { name = "Danial Zahedi", email = "Da.36512021@gmail.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 
 keywords = ["piratebay", "thepiratebay", "thepiratebay-api", "tpb", "api-wrapper", "scraper", "torrent", "httpx", "pydantic"]
 
@@ -20,19 +20,27 @@ dependencies = [
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Utilities",
+    "Topic :: Internet :: WWW/HTTP",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thepiratebay_api"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["tests/", "scratch.py"]
 
 [project.urls]
 Homepage = "https://github.com/9BitDaniel/thepiratebay-api"
@@ -42,12 +50,17 @@ BugTracker = "https://github.com/9BitDaniel/thepiratebay-api/issues"
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.15.18",
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N"]

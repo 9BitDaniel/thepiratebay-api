@@ -1,7 +1,7 @@
 import httpx
 
-from .config import BASE_URL, MIRROR_LIST
-from .helpers import build_detail_url, check_mirrors, sanitize_search_query
+from .config import BASE_URL, MIRROR_LIST_URL
+from .helpers import _build_detail_url, _check_mirrors, _sanitize_search_query
 from .models import Category, FullTorrent, MirrorList, SearchResult
 from .parsers import _parse_mirror_list, _parse_search_results, _parse_torrent_page
 
@@ -20,7 +20,7 @@ class TorrentClient:
     def __enter__(self):
         return self
 
-    def __exit__(self,*args):
+    def __exit__(self, *args):
         self.close()
 
     def __repr__(self) -> str:
@@ -37,38 +37,48 @@ class TorrentClient:
         page: int = 1,
     ) -> SearchResult:
         """Search a specific page of what you want."""
-        query = sanitize_search_query(query)
+        query = _sanitize_search_query(query)
         url = f"{self.base_url}/search/{query}/{page}/99/{category}"
         res = self.session.get(url)
-        return _parse_search_results(res.text, self.base_url)
+        return _parse_search_results(res.text, self.base_url, pattern="search")
 
     def detail(
         self,
         torrent_id: str | int,
     ) -> FullTorrent:
         """Fetches and parses a torrent's page."""
-        url = build_detail_url(self.base_url, torrent_id)
+        url = _build_detail_url(self.base_url, torrent_id)
         res = self.session.get(url)
         return _parse_torrent_page(res.text)
 
     def mirrors(self) -> MirrorList:
         """Fetches and parses the mirror list, use one of the mirrors as base url if the default fails."""
-        res = self.session.get(MIRROR_LIST)
+        res = self.session.get(MIRROR_LIST_URL)
         urls = _parse_mirror_list(res.text)
-        return check_mirrors(urls, self.session)
+        return _check_mirrors(urls, self.session)
 
+    def top(
+        self,
+        category: Category,
+    ) -> SearchResult:
+        """Returns the SearchResult for top torrents of a category."""
+        url = f"{self.base_url}/top/{category}"
+        res = self.session.get(url)
+        return _parse_search_results(res.text, self.base_url, pattern="top")
     def browse(
         self,
         category: Category,
         page: int = 1,
-    ) -> None: ...
-    def top(
-        self,
-        category: Category,
-        page: int = 1,
-    ) -> None: ...
+    ) -> SearchResult:
+        """Browses a category of torrents & returns the SearchResult."""
+        url = f"{self.base_url}/browse/{category}/{page}/3"
+        res = self.session.get(url)
+        return _parse_search_results(res.text, self.base_url, pattern="browse")
     def recent(
         self,
-        category: Category,
         page: int = 1,
-    ) -> None: ...
+    ) -> SearchResult:
+        """Returns the SearchResult for recent torrents."""
+        url = f"{self.base_url}/recent/{page}"
+        res = self.session.get(url)
+        return _parse_search_results(res.text, self.base_url, pattern="recent")

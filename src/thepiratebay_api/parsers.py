@@ -26,7 +26,7 @@ def _parse_dl(dl: Tag | None) -> dict[str, str]:
     return result
 
 
-def _parse_pagination(table) -> tuple[int, int]:
+def _parse_pagination(table: Tag, pattern: str) -> tuple[int, int]:
     """
     Extracts current page and total page count from the pagination row,
     since the pagination roww might exceed 30 and not show it isn't
@@ -43,7 +43,7 @@ def _parse_pagination(table) -> tuple[int, int]:
         current_page = 1
 
     page_numbers = []
-    for a in pagination_td.find_all("a", href=re.compile(r"/search/")):
+    for a in pagination_td.find_all("a", href=re.compile(fr"/{pattern}/")):
         try:
             page_numbers.append(int(a.get_text(strip=True)))
         except ValueError:
@@ -129,13 +129,13 @@ def _extract_pre_data(pre_tag: Tag | None) -> dict[str, str | list[str] | None]:
     }
 
 
-def _parse_search_results(html: str, base_url: str) -> SearchResult:
+def _parse_search_results(html: str, base_url: str, pattern: str) -> SearchResult:
     """Parses the HTML of a search results page into a search result."""
     soup = BeautifulSoup(html, "lxml")
     table = soup.find("table", {"id": "searchResult"})
     if not table:
         return SearchResult(torrents=[])
-    current_page, page_count = _parse_pagination(table)
+    current_page, page_count = _parse_pagination(table, pattern)
     rows = [
         tr
         for tr in table.find_all("tr")

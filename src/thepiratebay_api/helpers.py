@@ -20,24 +20,23 @@ def _check_mirror(url: str, client: httpx.Client) -> MirrorStatus:
         return MirrorStatus(url=url, status_code=None, is_alive=False)
 
 
-def check_mirrors(urls: list[str], client: httpx.Client) -> MirrorList:
+def _check_mirrors(urls: list[str], client: httpx.Client) -> MirrorList:
     """Checks all mirrors and returns a MirrorList."""
     return MirrorList(mirrors=[_check_mirror(url, client) for url in urls])
 
 
-def sanitize_search_query(query: str) -> str:
+def _sanitize_search_query(query: str) -> str:
     """Checks if there's no traversal bugs and percent-encodes the query."""
-    if not query:
-        return ""
-
     query = query.strip()
+    if not query:
+        raise ValueError("Search query cannot be empty.")
     # Fixes traversal bugs
     cleaned = query.replace("/", " ")
 
     return quote(cleaned, safe="")
 
 
-def build_detail_url(base_url: str, torrent_id: int | str) -> str:
+def _build_detail_url(base_url: str, torrent_id: int | str) -> str:
     """Return a valid URL to the torrent's page"""
     clean_id = int(torrent_id)
 
