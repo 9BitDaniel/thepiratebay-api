@@ -21,7 +21,7 @@ Or directly from GitHub:
 pip install git+https://github.com/9BitDaniel/thepiratebay-api.git
 ```
 ```bash
-uv add https://github.com/9BitDaniel/thepiratebay-api.git
+uv add git+https://github.com/9BitDaniel/thepiratebay-api.git
 ```
 
 ## Quick Start
@@ -53,8 +53,33 @@ results = client.search("ubuntu", page=2)
 print(f"Page {results.current_page} of {results.page_count}")
 ```
 
-### Categories
+## Working with Results
 
+All results are [Pydantic](https://docs.pydantic.dev) models, so you can serialize them however you need:
+
+```python
+results = client.search("Bomber Mafia")
+
+# Convert to dict
+results.model_dump()
+
+# Convert to JSON string
+results.model_dump_json()
+
+# Individual torrent
+torrent = results.torrents[0]
+torrent.model_dump()
+torrent.model_dump_json()
+
+# Full torrent details
+details = client.detail(torrent.torrent_id)
+details.model_dump()
+details.model_dump_json()
+```
+
+
+### Categories
+You could use all the major categories found in The Pirate Bay along with some of the sub categories
 ```python
 TorrentClient.Category.ALL
 
