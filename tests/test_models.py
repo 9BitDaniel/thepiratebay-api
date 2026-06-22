@@ -1,4 +1,4 @@
-from thepiratebay_api.models import BriefTorrent, Category
+from thepiratebay_api.models import BriefTorrent, Category, SortBy
 
 
 class TestBriefTorrentValidator:
@@ -30,3 +30,16 @@ class TestCategory:
 
     def test_video_proxy_gives_all(self):
         assert int(Category.Video) == 200
+
+class TestSortOrder:
+    def test_relevance_is_default_99(self):
+        assert int(SortBy.RELEVANCE) == 99
+
+    def test_seeders_desc(self):
+        assert int(SortBy.SEEDERS_DESC) == 7
+
+    def test_size_asc(self):
+        assert int(SortBy.SIZE_ASC) == 6
+
+    def test_date_desc(self):
+        assert int(SortBy.DATE_DESC) == 3

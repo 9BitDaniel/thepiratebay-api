@@ -2,13 +2,13 @@ import httpx
 
 from .config import BASE_URL, MIRROR_LIST_URL
 from .helpers import _build_detail_url, _check_mirrors, _sanitize_search_query
-from .models import Category, FullTorrent, MirrorList, SearchResult
+from .models import Category, SortBy, FullTorrent, MirrorList, SearchResult
 from .parsers import _parse_mirror_list, _parse_search_results, _parse_torrent_page
 
 
 class TorrentClient:
     Category = Category
-
+    SortBy = SortBy
     def __init__(
         self,
         url: str = BASE_URL,
@@ -34,11 +34,12 @@ class TorrentClient:
         self,
         query: str,
         category: Category = Category.ALL,
+        sort_by: SortBy = SortBy.RELEVANCE,
         page: int = 1,
     ) -> SearchResult:
         """Search a specific page of what you want."""
         query = _sanitize_search_query(query)
-        url = f"{self.base_url}/search/{query}/{page}/99/{category}"
+        url = f"{self.base_url}/search/{query}/{page}/{sort_by}/{category}"
         res = self.session.get(url)
         return _parse_search_results(res.text, self.base_url, pattern="search")
 
@@ -68,10 +69,11 @@ class TorrentClient:
     def browse(
         self,
         category: Category,
+        sort_by: SortBy = SortBy.RELEVANCE,
         page: int = 1,
     ) -> SearchResult:
         """Browses a category of torrents & returns the SearchResult."""
-        url = f"{self.base_url}/browse/{category}/{page}/3"
+        url = f"{self.base_url}/browse/{category}/{page}/{sort_by}"
         res = self.session.get(url)
         return _parse_search_results(res.text, self.base_url, pattern="browse")
     def recent(

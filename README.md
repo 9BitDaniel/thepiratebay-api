@@ -4,7 +4,7 @@
 
 An unofficial Python API wrapper for The Pirate Bay.
 
->**Beta** — Please [open an issue](https://github.com/9BitDaniel/thepiratebay-api/issues) if something's not working.
+>Please [open an issue](https://github.com/9BitDaniel/thepiratebay-api/issues) if something's not working.
 
 ## Installation
 
@@ -49,6 +49,12 @@ results = client.search("Tenet", category=TorrentClient.Category.Video.HD_MOVIES
 
 # With pagination
 results = client.search("ubuntu", page=2)
+
+# With custom sorting
+results = client.search(
+    "ubuntu", 
+    sort_by=TorrentClient.SortBy.SEEDERS_DESC
+)
 
 print(f"Page {results.current_page} of {results.page_count}")
 ```
@@ -156,7 +162,7 @@ client = TorrentClient(timeout=30)
 client = TorrentClient(headers={"User-Agent": "Mozilla/5.0"})
 
 # Through a proxy
-client = TorrentClient(proxy="http://localhost:8080")
+client = TorrentClient(proxy="socks5://localhost:1080")
 
 # Custom mirror as base URL
 client = TorrentClient(url="https://thepiratebay.bond")
@@ -173,6 +179,10 @@ client = TorrentClient(url="https://thepiratebay.bond")
 ## Contributing
 
 Contributions are welcome
+
+## Support the Project ⭐
+
+If you found this API wrapper useful, please consider giving this repository a **Star**
 
 ## License
 
