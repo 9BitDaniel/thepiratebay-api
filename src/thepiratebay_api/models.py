@@ -220,3 +220,12 @@ class Category(metaclass=CategoryMeta):
     Games = _Games
     Porn = _XXX
     Other = _Other
+
+class SortBy(IntEnum):
+    RELEVANCE    = 99
+    SEEDERS_ASC  = 8
+    SEEDERS_DESC = 7
+    SIZE_ASC     = 6
+    SIZE_DESC    = 5
+    DATE_ASC     = 4
+    DATE_DESC    = 3

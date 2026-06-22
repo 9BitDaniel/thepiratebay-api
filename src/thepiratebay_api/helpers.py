@@ -3,20 +3,27 @@ from urllib.parse import quote
 import httpx
 
 from .models import MirrorList, MirrorStatus
-
+from .parsers import _parse_search_results
 
 def _check_mirror(url: str, client: httpx.Client) -> MirrorStatus:
-    """Checks a single mirror URL and returns its status."""
+    """Checks a mirror by executing a test query and parsing the results."""
     try:
-        res = client.get(url, follow_redirects=True)
+        test_url = f"{url.rstrip('/')}/search/ubuntu/1/99/0"
+        res = client.get(test_url, follow_redirects=True)
+        
+        is_functional = False
+        if res.status_code == 200:
+            # Double check if the mirror has the same html structure
+            result = _parse_search_results(res.text, url, pattern="search")
+            if len(result.torrents) > 0:
+                is_functional = True
+                
         return MirrorStatus(
             url=url,
             status_code=res.status_code,
-            is_alive=res.status_code < 400,
+            is_alive=is_functional,
         )
-    except httpx.TimeoutException:
-        return MirrorStatus(url=url, status_code=None, is_alive=False)
-    except httpx.RequestError:
+    except Exception:
         return MirrorStatus(url=url, status_code=None, is_alive=False)
 
 

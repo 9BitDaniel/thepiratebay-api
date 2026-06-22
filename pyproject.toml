@@ -1,6 +1,6 @@
 [project]
 name = "thepiratebay-api"
-version = "0.1.0b1"
+version = "0.1.0"
 description = "An Unofficial API wrapper for the pirate bay"
 readme = "README.md"
 authors = [
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
